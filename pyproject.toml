@@ -37,6 +37,7 @@ select = ['I', 'F', 'E', 'W', 'PL', 'PT']
 preview = true
 quote-style = 'single'
 
+
 [tool.pytest.ini_options]
 pythonpath = "."
 addopts = "--cov=fastapi_zero --cov-report=term-missing -p no:warnings"
@@ -47,6 +48,6 @@ pre_format = 'ruff check --fix'
 format = 'ruff format'
 run = 'fastapi dev fastapi_zero/app.py'
 pre_test = 'task lint'
-test = 'pytest -s -x --cov=fast_zero -vv'
+test = 'pytest -s -x --cov=fastapi_zero -vv'
 post_test = 'coverage html'
 
