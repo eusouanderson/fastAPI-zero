@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
 from fastapi_zero.app import app
-from fastapi_zero.database import get_session
-from fastapi_zero.models import User, table_registry
+from fastapi_zero.db.models import User, table_registry
+from fastapi_zero.db.session import get_session
 
 
 @pytest.fixture

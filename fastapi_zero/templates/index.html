@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fast Scraper</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+
+<body>
+  <main class="container">
+    <header class="header">
+      <div>
+        <p class="eyebrow">FastAPI Zero</p>
+        <h1>Webscraping rápido de preços</h1>
+        <p class="subtitle">
+          Cole URLs de produtos e encontre o menor preço por produto.
+        </p>
+      </div>
+      <div class="badge">v1</div>
+    </header>
+
+    <section class="card">
+      <form id="scrape-form">
+        <label class="field">
+          <span>URLs (uma por linha)</span>
+          <textarea id="urls" rows="8" placeholder="https://www.kabum.com.br/
+https://www.pichau.com.br/
+https://www.terabyteshop.com.br/
+https://lista.mercadolivre.com.br/pecas-de-computadores
+https://www.popshopinformatica.com.br/pecas-para-computador
+https://www.netalfa.com.br/hardware
+https://www.brazilpc.com.br/
+https://www.loja.gsiinformatica.com.br/pecas" required>https://www.kabum.com.br/
+https://www.pichau.com.br/
+https://www.terabyteshop.com.br/
+https://lista.mercadolivre.com.br/pecas-de-computadores
+https://www.popshopinformatica.com.br/pecas-para-computador
+https://www.netalfa.com.br/hardware
+https://www.brazilpc.com.br/
+https://www.loja.gsiinformatica.com.br/pecas</textarea>
+        </label>
+
+        <div class="grid">
+          <label class="field">
+            <span>Categoria (opcional)</span>
+            <input id="category" type="text" placeholder="smartphones" />
+          </label>
+          <label class="field">
+            <span>Concorrência</span>
+            <input id="concurrency" type="number" min="1" max="200" value="20" required />
+          </label>
+        </div>
+
+        <button class="btn" type="submit">Rodar scraping</button>
+        <p id="status" class="status"></p>
+      </form>
+    </section>
+
+    <section class="card">
+      <form id="search-form">
+        <h2>Buscar produtos em somente uma url</h2>
+        <p class="subtitle">Informe a URL de busca para descobrir produtos automaticamente.</p>
+        <label class="field">
+          <span>Nome da pesquisa</span>
+          <input id="search-term" type="text" placeholder="rx 7600" />
+        </label>
+        <label class="field">
+          <span>URL de busca</span>
+          <input id="search-url" type="url" placeholder="https://www.kabum.com.br/" required />
+        </label>
+
+        <div class="grid">
+          <label class="field">
+            <span>Páginas</span>
+            <input id="search-pages" type="number" min="1" max="50" value="2" required />
+          </label>
+          <label class="field">
+            <span>Limite de URLs</span>
+            <input id="search-limit" type="number" min="1" max="2000" value="50" required />
+          </label>
+          <label class="field">
+            <span>Temperatura (precisão)</span>
+            <input id="search-temperature" type="range" min="0" max="1" step="0.1" value="0.3" />
+            <small class="hint">0 = mais preciso, 1 = mais abrangente</small>
+          </label>
+        </div>
+
+        <button class="btn" type="submit">Buscar e raspar</button>
+        <p id="search-status" class="status"></p>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Menores preços</h2>
+      <div class="filters">
+        <label class="field">
+          <span>Ordenar</span>
+          <select id="result-sort">
+            <option value="price-asc" selected>Menor preço</option>
+            <option value="price-desc">Maior preço</option>
+            <option value="name-asc">Nome (A-Z)</option>
+            <option value="name-desc">Nome (Z-A)</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Preço mínimo</span>
+          <input id="price-min" type="number" min="0" step="0.01" placeholder="0" />
+        </label>
+        <label class="field">
+          <span>Preço máximo</span>
+          <input id="price-max" type="number" min="0" step="0.01" placeholder="9999" />
+        </label>
+      </div>
+      <div id="results" class="table"></div>
+    </section>
+
+    <section class="card">
+      <h2>Itens capturados</h2>
+      <div id="raw" class="table"></div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+
+</html>

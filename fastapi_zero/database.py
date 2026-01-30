@@ -1,14 +1,8 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
+"""Backward-compatible database module.
 
-from fastapi_zero.settings import Settings
+Prefer importing from fastapi_zero.db.session.
+"""
 
-engine = create_engine(
-    Settings().DATABASE_URL,
-)
+from fastapi_zero.db.session import engine, get_session
 
-
-def get_session():
-    """Get a new SQLAlchemy session."""
-    with Session(engine) as session:
-        yield session
+__all__ = ['engine', 'get_session']

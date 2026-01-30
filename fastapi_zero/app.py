@@ -1,20 +1,23 @@
 from http import HTTPStatus
 
-from fastapi import Depends, FastAPI, HTTPException
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
-from fastapi_zero.database import get_session
-from fastapi_zero.models import User
-from fastapi_zero.schemas import (
-    Message,
-    UserList,
-    UserPublic,
-    UserSchema,
-)
+from fastapi_zero.api.routes.scrape import router as scrape_router
+from fastapi_zero.api.routes.users import router as users_router
+from fastapi_zero.schemas import Message
 
 app = FastAPI(title='API')
+
+app.mount(
+    '/static', StaticFiles(directory='fastapi_zero/static'), name='static'
+)
+templates = Jinja2Templates(directory='fastapi_zero/templates')
+
+app.include_router(users_router)
+app.include_router(scrape_router)
 
 
 @app.get('/', status_code=HTTPStatus.OK, response_model=Message)
@@ -22,81 +25,6 @@ def read_root():
     return {'message': 'Olá mundo!'}
 
 
-@app.post('/users/', status_code=HTTPStatus.CREATED, response_model=UserPublic)
-def create_user(user: UserSchema, session: Session = Depends(get_session)):
-    db_user = session.scalar(
-        select(User).where(
-            (User.username == user.username) | (User.email == user.email)
-        )
-    )
-
-    if db_user:
-        if db_user.username == user.username:
-            raise HTTPException(
-                detail='Username already exists',
-                status_code=HTTPStatus.CONFLICT,
-            )
-        elif db_user.email == user.email:
-            raise HTTPException(
-                detail='Email already exists', status_code=HTTPStatus.CONFLICT
-            )
-
-    db_user = User(**user.model_dump())
-
-    session.add(db_user)
-    session.commit()
-    session.refresh(db_user)
-
-    return db_user
-
-
-@app.get('/users/', status_code=HTTPStatus.OK, response_model=UserList)
-def read_users(
-    offset: int = 0, limit: int = 100, session: Session = Depends(get_session)
-):
-    users = session.scalars(select(User).limit(limit).offset(offset))
-    return {'users': users}
-
-
-@app.put(
-    '/users/{user_id}', status_code=HTTPStatus.OK, response_model=UserPublic
-)
-def update_user(
-    user_id: int, user: UserSchema, session: Session = Depends(get_session)
-):
-    user_db = session.scalar(select(User).where(User.id == user_id))
-
-    if not user_db:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
-        )
-    try:
-        user_db.email = user.email
-        user_db.username = user.username
-        user_db.password = user.password
-
-        session.add(user_db)
-        session.commit()
-        session.refresh(user_db)
-
-        return user_db
-    except IntegrityError:
-        raise HTTPException(
-            detail='Username or Email already exists',
-            status_code=HTTPStatus.CONFLICT,
-        )
-
-
-@app.delete(
-    '/users/{user_id}', status_code=HTTPStatus.OK, response_model=Message
-)
-def delete_user(user_id: int, session: Session = Depends(get_session)):
-    user_db = session.scalar(select(User).where(User.id == user_id))
-    if not user_db:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
-        )
-    session.delete(user_db)
-    session.commit()
-
-    return {'message': 'User deleted'}
+@app.get('/ui', response_class=HTMLResponse)
+def ui_home(request: Request):
+    return templates.TemplateResponse('index.html', {'request': request})

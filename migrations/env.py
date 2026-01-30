@@ -1,8 +1,9 @@
 from logging.config import fileConfig
-from fastapi_zero.settings import Settings
-from sqlalchemy import engine_from_config
-from fastapi_zero.models import table_registry
-from sqlalchemy import pool
+
+from sqlalchemy import engine_from_config, pool
+
+from fastapi_zero.core.settings import Settings
+from fastapi_zero.db.models import table_registry
 
 from alembic import context
 

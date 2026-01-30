@@ -1,10 +1,8 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+"""Backward-compatible settings module.
 
+Prefer importing from fastapi_zero.core.settings.
+"""
 
-class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file='.env',
-        env_file_encoding='utf-8',
-    )
+from fastapi_zero.core.settings import Settings
 
-    DATABASE_URL: str
+__all__ = ['Settings']
