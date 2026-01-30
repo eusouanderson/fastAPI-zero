@@ -7,8 +7,19 @@ const rawEl = document.getElementById("raw");
 const sortEl = document.getElementById("result-sort");
 const priceMinEl = document.getElementById("price-min");
 const priceMaxEl = document.getElementById("price-max");
+const loadingOverlay = document.getElementById("loading-overlay");
+const loadingText = document.getElementById("loading-text");
 
 let lastResults = [];
+
+const showLoading = (message = "Buscando produtos...") => {
+  loadingText.textContent = message;
+  loadingOverlay.classList.remove("hidden");
+};
+
+const hideLoading = () => {
+  loadingOverlay.classList.add("hidden");
+};
 
 const normalizeText = (value) =>
   value
@@ -199,11 +210,12 @@ const runScrape = async (urls) => {
   let finalUrls = productUrls;
 
   if (!finalUrls.length && baseUrls.length) {
-    statusEl.textContent = "Descobrindo produtos nas lojas...";
+    showLoading("Descobrindo produtos nas lojas...");
     finalUrls = await discoverFromBaseUrls(baseUrls);
   }
 
   if (!finalUrls.length) {
+    hideLoading();
     statusEl.textContent = "Não encontrei URLs de produtos. Tente links diretos de produtos.";
     return;
   }
@@ -218,7 +230,8 @@ const runScrape = async (urls) => {
   if (searchForm) {
     searchForm.querySelector("button").disabled = true;
   }
-  statusEl.textContent = "Processando...";
+  
+  showLoading("Processando... Extraindo preços...");
 
   try {
     const response = await fetch("/scrape/urls", {
@@ -246,6 +259,7 @@ const runScrape = async (urls) => {
   } catch (error) {
     statusEl.textContent = error.message;
   } finally {
+    hideLoading();
     form.querySelector("button").disabled = false;
     if (searchForm) {
       searchForm.querySelector("button").disabled = false;
@@ -297,7 +311,7 @@ if (searchForm) {
     }
 
     searchForm.querySelector("button").disabled = true;
-    searchStatusEl.textContent = "Descobrindo produtos...";
+    showLoading(`Buscando por "${searchTerm || "produtos"}"`);
 
     try {
       const response = await fetch("/crawl/search", {
@@ -305,6 +319,7 @@ if (searchForm) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           search_url: finalSearchUrl,
+          query: searchTerm || null,
           max_pages: maxPages,
           max_urls: maxUrls,
         }),
@@ -335,8 +350,10 @@ if (searchForm) {
       }
 
       searchStatusEl.textContent = `Encontrados ${data.total_urls} produtos. Rodando scraping...`;
+      showLoading("Coletando dados dos produtos...");
       await runScrape(urls);
     } catch (error) {
+      hideLoading();
       searchStatusEl.textContent = error.message;
     } finally {
       searchForm.querySelector("button").disabled = false;
