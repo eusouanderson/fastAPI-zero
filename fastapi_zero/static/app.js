@@ -29,6 +29,27 @@ const normalizeText = (value) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
+const calculateRelevance = (text, query) => {
+  if (!query || !text) return 0;
+  const normalizedText = text.toLowerCase();
+  const normalizedQuery = query.toLowerCase();
+  const words = normalizedQuery.split(/\s+/);
+  
+  let score = 0;
+  for (const word of words) {
+    if (normalizedText.includes(word)) {
+      score += 1;
+    }
+  }
+  
+  // Exact match bonus
+  if (normalizedText.includes(normalizedQuery)) {
+    score += words.length;
+  }
+  
+  return score;
+};
+
 const looksLikeProductUrl = (url) =>
   /\/produto\//i.test(url) ||
   /\/product\//i.test(url) ||
@@ -194,7 +215,7 @@ const buildRawRow = (item) => {
   return row;
 };
 
-const runScrape = async (urls) => {
+const runScrape = async (urls, searchQuery = null) => {
   statusEl.textContent = "";
   resultsEl.innerHTML = "";
   rawEl.innerHTML = "";
@@ -218,6 +239,19 @@ const runScrape = async (urls) => {
     hideLoading();
     statusEl.textContent = "Não encontrei URLs de produtos. Tente links diretos de produtos.";
     return;
+  }
+
+  // Filter URLs by query if provided
+  if (searchQuery) {
+    const filtered = finalUrls.filter((url) => {
+      const relevance = calculateRelevance(url, searchQuery);
+      return relevance > 0;
+    });
+    
+    if (filtered.length > 0) {
+      finalUrls = filtered;
+      statusEl.textContent = `Filtrados ${finalUrls.length} URLs relevantes para "${searchQuery}"`;
+    }
   }
 
   const payload = {
@@ -246,9 +280,25 @@ const runScrape = async (urls) => {
     }
 
     const data = await response.json();
-    statusEl.textContent = `Capturados ${data.total_scraped} URLs. Salvos ${data.total_saved} preços.`;
+    
+    let products = data.products || [];
+    
+    // Filter products by search query if provided
+    if (searchQuery) {
+      products = products
+        .map(p => ({
+          ...p,
+          _relevance: calculateRelevance(p.name, searchQuery)
+        }))
+        .filter(p => p._relevance > 0)
+        .sort((a, b) => b._relevance - a._relevance);
+      
+      statusEl.textContent = `Capturados ${data.total_scraped} URLs. Salvos ${data.total_saved} preços. ${products.length} relevantes para "${searchQuery}".`;
+    } else {
+      statusEl.textContent = `Capturados ${data.total_scraped} URLs. Salvos ${data.total_saved} preços.`;
+    }
 
-    lastResults = data.products || [];
+    lastResults = products;
     applyResultFilters();
 
     renderTable(
@@ -284,8 +334,10 @@ form.addEventListener("submit", async (event) => {
     .value.split("\n")
     .map((url) => url.trim())
     .filter(Boolean);
+  
+  const searchQuery = document.getElementById("search-query")?.value.trim() || null;
 
-  await runScrape(urls.length ? urls : defaultStoreUrls);
+  await runScrape(urls.length ? urls : defaultStoreUrls, searchQuery);
 });
 
 if (searchForm) {
