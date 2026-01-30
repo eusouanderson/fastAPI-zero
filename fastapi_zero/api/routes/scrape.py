@@ -17,6 +17,7 @@ from fastapi_zero.schemas import (
     SearchCrawlResponse,
 )
 from fastapi_zero.services.scraper import Scraper, normalize_product_name
+from fastapi_zero.services.smart_scraper import SmartScraper
 
 router = APIRouter(tags=['scraping'])
 
@@ -44,14 +45,27 @@ async def crawl_urls(payload: CrawlRequest):
     response_model=SearchCrawlResponse,
 )
 async def crawl_search(payload: SearchCrawlRequest):
-    scraper = Scraper(max_concurrency=payload.max_concurrency)
-    urls = await scraper.discover_search_urls(
-        search_url=str(payload.search_url),
-        max_pages=payload.max_pages,
-        max_urls=payload.max_urls,
-        include_patterns=payload.include_patterns,
-        exclude_patterns=payload.exclude_patterns,
-    )
+    if payload.query:
+        # Use SmartScraper with optimization when query is provided
+        scraper = SmartScraper(max_concurrency=payload.max_concurrency)
+        urls = await scraper.discover_search_urls_optimized(
+            search_url=str(payload.search_url),
+            query=payload.query,
+            max_pages=payload.max_pages,
+            max_urls=payload.max_urls,
+            include_patterns=payload.include_patterns,
+            exclude_patterns=payload.exclude_patterns,
+        )
+    else:
+        # Use regular Scraper when no query is provided
+        scraper = Scraper(max_concurrency=payload.max_concurrency)
+        urls = await scraper.discover_search_urls(
+            search_url=str(payload.search_url),
+            max_pages=payload.max_pages,
+            max_urls=payload.max_urls,
+            include_patterns=payload.include_patterns,
+            exclude_patterns=payload.exclude_patterns,
+        )
     return SearchCrawlResponse(total_urls=len(urls), urls=urls)
 
 

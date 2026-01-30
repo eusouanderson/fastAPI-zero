@@ -69,6 +69,7 @@ class CrawlResponse(BaseModel):
 
 class SearchCrawlRequest(BaseModel):
     search_url: HttpUrl
+    query: str | None = None
     max_pages: int = Field(default=5, ge=1, le=50)
     max_urls: int = Field(default=500, ge=1, le=20000)
     max_concurrency: int = Field(default=5, ge=1, le=50)
