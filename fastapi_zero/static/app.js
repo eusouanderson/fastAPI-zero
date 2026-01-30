@@ -285,15 +285,17 @@ const runScrape = async (urls, searchQuery = null) => {
     
     // Filter products by search query if provided
     if (searchQuery) {
-      products = products
+      const relevantProducts = products
         .map(p => ({
-          ...p,
-          _relevance: calculateRelevance(p.name, searchQuery)
+          product: p,
+          relevance: calculateRelevance(p.name, searchQuery)
         }))
-        .filter(p => p._relevance > 0)
-        .sort((a, b) => b._relevance - a._relevance);
+        .filter(item => item.relevance > 0)
+        .sort((a, b) => b.relevance - a.relevance)
+        .map(item => item.product);
       
-      statusEl.textContent = `Capturados ${data.total_scraped} URLs. Salvos ${data.total_saved} preços. ${products.length} relevantes para "${searchQuery}".`;
+      statusEl.textContent = `Capturados ${data.total_scraped} URLs. Salvos ${data.total_saved} preços. ${relevantProducts.length} relevantes para "${searchQuery}".`;
+      products = relevantProducts;
     } else {
       statusEl.textContent = `Capturados ${data.total_scraped} URLs. Salvos ${data.total_saved} preços.`;
     }
