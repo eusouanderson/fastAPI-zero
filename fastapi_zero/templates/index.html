@@ -70,6 +70,22 @@ https://www.loja.gsiinformatica.com.br/pecas</textarea>
           </label>
         </div>
 
+        <div class="grid">
+          <label class="field">
+            <span>Páginas (profundidade)</span>
+            <input id="multi-pages" type="number" min="1" max="10" value="2" required />
+          </label>
+          <label class="field">
+            <span>Limite de URLs</span>
+            <input id="multi-limit" type="number" min="1" max="20000" value="500" required />
+          </label>
+          <label class="field">
+            <span>Temperatura (precisão)</span>
+            <input id="multi-temperature" type="range" min="0" max="1" step="0.1" value="0.3" />
+            <small class="hint">0 = mais preciso, 1 = mais abrangente</small>
+          </label>
+        </div>
+
         <button class="btn" type="submit">Rodar scraping</button>
         <p id="status" class="status"></p>
       </form>

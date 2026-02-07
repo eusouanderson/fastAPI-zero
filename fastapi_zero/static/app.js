@@ -57,7 +57,7 @@ const looksLikeProductUrl = (url) =>
   /\/p\/[\w-]*\d/i.test(url) ||
   /\/MLB-\d+/i.test(url);
 
-const discoverFromBaseUrls = async (baseUrls) => {
+const discoverFromBaseUrls = async (baseUrls, config) => {
   const includePatterns = [
     "/produto/",
     "/product/",
@@ -75,12 +75,12 @@ const discoverFromBaseUrls = async (baseUrls) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           base_url: baseUrl,
-          max_urls: 500,
-          max_concurrency: 10,
+          max_urls: config?.maxUrls ?? 500,
+          max_concurrency: config?.maxConcurrency ?? 10,
           include_patterns: includePatterns,
           use_sitemap: true,
-          follow_links: false,
-          max_depth: 1,
+          follow_links: true,
+          max_depth: config?.maxDepth ?? 1,
         }),
       });
 
@@ -377,7 +377,7 @@ if (cartToggle) {
 // fetch cart once on load (non-blocking)
 fetchCart();
 
-const runScrape = async (urls, searchQuery = null) => {
+const runScrape = async (urls, searchQuery = null, options = {}) => {
   statusEl.textContent = "";
   resultsEl.innerHTML = "";
   rawEl.innerHTML = "";
@@ -394,7 +394,11 @@ const runScrape = async (urls, searchQuery = null) => {
 
   if (!finalUrls.length && baseUrls.length) {
     showLoading("Descobrindo produtos nas lojas...");
-    finalUrls = await discoverFromBaseUrls(baseUrls);
+    finalUrls = await discoverFromBaseUrls(baseUrls, {
+      maxUrls: options.maxUrls,
+      maxDepth: options.maxPages,
+      maxConcurrency: options.maxConcurrency,
+    });
   }
 
   if (!finalUrls.length) {
@@ -405,11 +409,22 @@ const runScrape = async (urls, searchQuery = null) => {
 
   // Filter URLs by query if provided
   if (searchQuery) {
+    const temperature = Number(options.temperature ?? 0.3);
+    const threshold = 0.2 + temperature * 0.6;
+    const needle = normalizeText(searchQuery);
+
     const filtered = finalUrls.filter((url) => {
-      const relevance = calculateRelevance(url, searchQuery);
-      return relevance > 0;
+      const slug = normalizeText(url);
+      const hit = slug.includes(needle);
+      if (temperature < 0.4) {
+        return hit;
+      }
+      if (temperature < 0.7) {
+        return hit || Math.random() < threshold * 0.2;
+      }
+      return true;
     });
-    
+
     if (filtered.length > 0) {
       finalUrls = filtered;
       statusEl.textContent = `Filtrados ${finalUrls.length} URLs relevantes para "${searchQuery}"`;
@@ -419,7 +434,7 @@ const runScrape = async (urls, searchQuery = null) => {
   const payload = {
     urls: finalUrls,
     category: document.getElementById("category").value || null,
-    max_concurrency: Number(document.getElementById("concurrency").value),
+    max_concurrency: Number(options.maxConcurrency ?? document.getElementById("concurrency").value),
   };
 
   form.querySelector("button").disabled = true;
@@ -447,17 +462,24 @@ const runScrape = async (urls, searchQuery = null) => {
     
     // Filter products by search query if provided
     if (searchQuery) {
+      const temperature = Number(options.temperature ?? 0.3);
+      const threshold = 0.2 + temperature * 0.6;
       const relevantProducts = products
-        .map(p => ({
+        .map((p) => ({
           product: p,
-          relevance: calculateRelevance(p.name, searchQuery)
+          relevance: calculateRelevance(p.name, searchQuery),
         }))
-        .filter(item => item.relevance > 0)
+        .filter((item) => (temperature < 0.4 ? item.relevance > 0 : true))
         .sort((a, b) => b.relevance - a.relevance)
-        .map(item => item.product);
-      
-      statusEl.textContent = `Capturados ${data.total_scraped} URLs. Salvos ${data.total_saved} preços. ${relevantProducts.length} relevantes para "${searchQuery}".`;
-      products = relevantProducts;
+        .map((item) => item.product);
+
+      const sliced =
+        temperature < 0.7
+          ? relevantProducts.filter(() => Math.random() < threshold || temperature < 0.4)
+          : relevantProducts;
+
+      statusEl.textContent = `Capturados ${data.total_scraped} URLs. Salvos ${data.total_saved} preços. ${sliced.length} relevantes para "${searchQuery}".`;
+      products = sliced;
     } else {
       statusEl.textContent = `Capturados ${data.total_scraped} URLs. Salvos ${data.total_saved} preços.`;
     }
@@ -501,7 +523,17 @@ form.addEventListener("submit", async (event) => {
   
   const searchQuery = document.getElementById("search-query")?.value.trim() || null;
 
-  await runScrape(urls.length ? urls : defaultStoreUrls, searchQuery);
+  const maxPages = Number(document.getElementById("multi-pages").value);
+  const maxUrls = Number(document.getElementById("multi-limit").value);
+  const temperature = Number(document.getElementById("multi-temperature").value);
+  const maxConcurrency = Number(document.getElementById("concurrency").value);
+
+  await runScrape(urls.length ? urls : defaultStoreUrls, searchQuery, {
+    maxPages,
+    maxUrls,
+    temperature,
+    maxConcurrency,
+  });
 });
 
 if (searchForm) {
@@ -567,7 +599,12 @@ if (searchForm) {
 
       searchStatusEl.textContent = `Encontrados ${data.total_urls} produtos. Rodando scraping...`;
       showLoading("Coletando dados dos produtos...");
-      await runScrape(urls);
+      await runScrape(urls, searchTerm || null, {
+        maxPages,
+        maxUrls,
+        temperature,
+        maxConcurrency: Number(document.getElementById("concurrency").value),
+      });
     } catch (error) {
       hideLoading();
       searchStatusEl.textContent = error.message;
