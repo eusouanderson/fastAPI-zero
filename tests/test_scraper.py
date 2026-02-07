@@ -1,14 +1,15 @@
+# ruff: noqa: PLR6301, PLR2004, E501
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-import json
-from unittest.mock import AsyncMock, patch, MagicMock
+
 from fastapi_zero.services.scraper import (
-    Scraper,
-    ScrapedItem,
     DiscoveryConfig,
     DiscoveryFilters,
-    MIN_PRICE_LENGTH,
-    parse_price,
+    ScrapedItem,
+    Scraper,
     normalize_product_name,
+    parse_price,
 )
 
 

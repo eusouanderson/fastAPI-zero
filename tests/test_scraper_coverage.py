@@ -1,17 +1,19 @@
-import pytest
+# ruff: noqa: PLR6301, PLR2004, E501, PLC0415, PLC2701, PLC1901
 from unittest.mock import AsyncMock, MagicMock, patch
-import json
+
+import pytest
+
 from fastapi_zero.services.scraper import (
-    Scraper,
     ScrapedItem,
-    _fetch_text,
-    _parse_sitemap,
-    _normalize_url,
+    Scraper,
     _allowed_by_filters,
-    _extract_links,
-    _strip_ns,
-    _extract_pagination_links,
     _extract_from_next,
+    _extract_links,
+    _extract_pagination_links,
+    _fetch_text,
+    _normalize_url,
+    _parse_sitemap,
+    _strip_ns,
 )
 
 
@@ -32,7 +34,6 @@ class TestFetchText:
         mock_client.get.assert_called_once()
 
     @pytest.mark.asyncio
-
     @pytest.mark.asyncio
     async def test_fetch_text_exception(self):
         """Testa _fetch_text com exceção."""
@@ -57,7 +58,7 @@ class TestParseSitemap:
                 <loc>https://example.com/page2</loc>
             </url>
         </urlset>"""
-        
+
         urls, sitemaps = _parse_sitemap(content)
         assert "https://example.com/page1" in urls
         assert "https://example.com/page2" in urls
@@ -73,7 +74,7 @@ class TestParseSitemap:
                 <loc>https://example.com/sitemap2.xml</loc>
             </sitemap>
         </sitemapindex>"""
-        
+
         urls, sitemaps = _parse_sitemap(content)
         assert "https://example.com/sitemap1.xml" in sitemaps
         assert "https://example.com/sitemap2.xml" in sitemaps
@@ -129,7 +130,7 @@ class TestAllowedByFilters:
     def test_allowed_by_filters_include_match(self):
         """Testa com include filter que corresponde."""
         from fastapi_zero.services.scraper import _compile_patterns
-        
+
         include_regex = _compile_patterns([r'/product/'])
         result = _allowed_by_filters("https://example.com/product/1", include_regex, None)
         # Resultado depende se includeRegex é list ou padrão compilado
@@ -138,7 +139,7 @@ class TestAllowedByFilters:
     def test_allowed_by_filters_exclude_match(self):
         """Testa com exclude filter que corresponde."""
         from fastapi_zero.services.scraper import _compile_patterns
-        
+
         exclude_regex = _compile_patterns([r'/admin/'])
         result = _allowed_by_filters("https://example.com/admin/panel", None, exclude_regex)
         assert isinstance(result, bool)
@@ -264,19 +265,19 @@ class TestScraperDiscoveryMethods:
     async def test_discover_urls_with_follow_links(self):
         """Testa discover_urls com follow_links=True."""
         scraper = Scraper()
-        
+
         with patch.object(scraper, '_discover_urls_impl', new_callable=AsyncMock) as mock:
             mock.return_value = [
                 "https://example.com/product/1",
                 "https://example.com/product/2",
             ]
-            
+
             result = await scraper.discover_urls(
                 "https://example.com",
                 follow_links=True,
                 max_depth=2
             )
-            
+
             assert isinstance(result, list)
             assert mock.call_count == 1
 
@@ -284,33 +285,33 @@ class TestScraperDiscoveryMethods:
     async def test_discover_urls_with_patterns(self):
         """Testa discover_urls com include/exclude patterns."""
         scraper = Scraper()
-        
+
         with patch.object(scraper, '_discover_urls_impl', new_callable=AsyncMock) as mock:
             mock.return_value = []
-            
+
             result = await scraper.discover_urls(
                 "https://example.com",
                 include_patterns=[r'/product/'],
                 exclude_patterns=[r'/admin/']
             )
-            
+
             assert result == []
 
     @pytest.mark.asyncio
     async def test_discover_search_urls_with_pagination(self):
         """Testa discover_search_urls com paginação."""
         scraper = Scraper()
-        
+
         with patch("fastapi_zero.services.scraper._fetch_text", new_callable=AsyncMock) as mock_fetch:
             # Mock para retornar HTML sem links (para simplificar o teste)
             mock_fetch.return_value = "<html><body></body></html>"
-            
+
             result = await scraper.discover_search_urls(
                 "https://example.com/search?q=test",
                 max_pages=1,
                 max_urls=100
             )
-            
+
             assert isinstance(result, list)
 
 
@@ -321,13 +322,13 @@ class TestScraperBoundedFetch:
     async def test_bounded_fetch_success(self):
         """Testa _bounded_fetch com sucesso."""
         scraper = Scraper()
-        
+
         mock_client = AsyncMock()
         mock_response = MagicMock()
         mock_response.text = '<html><title>Product</title></html>'
         mock_response.status_code = 200
         mock_client.get.return_value = mock_response
-        
+
         with patch('fastapi_zero.services.scraper.parse_html') as mock_parse:
             mock_parse.return_value = ScrapedItem(
                 url="https://example.com/product/1",
@@ -336,27 +337,27 @@ class TestScraperBoundedFetch:
                 currency="USD",
                 raw_price="$99.99"
             )
-            
+
             result = await scraper._bounded_fetch(
                 mock_client,
                 "https://example.com/product/1"
             )
-            
+
             assert isinstance(result, ScrapedItem)
 
     @pytest.mark.asyncio
     async def test_bounded_fetch_error(self):
         """Testa _bounded_fetch com erro."""
         scraper = Scraper()
-        
+
         mock_client = AsyncMock()
         mock_client.get.side_effect = Exception("Network error")
-        
+
         result = await scraper._bounded_fetch(
             mock_client,
             "https://example.com/product/1"
         )
-        
+
         # Deve retornar None ou resultado vazio em caso de erro
         assert result is None or isinstance(result, ScrapedItem)
 
@@ -367,7 +368,7 @@ class TestScraperBuildClient:
     def test_build_client(self):
         """Testa criação do cliente httpx."""
         scraper = Scraper(timeout=5.0)
-        
+
         # _build_client retorna um context manager
         # Podemos verificar que ele pode ser usado em 'async with'
         assert hasattr(scraper._build_client(), '__aenter__')
@@ -380,7 +381,7 @@ class TestScraperEdgeCases:
     async def test_scrape_urls_with_timeout(self):
         """Testa scrape_urls com timeout curto."""
         scraper = Scraper(timeout=0.001)
-        
+
         # Com timeout muito curto, deve falhar ou retornar vazio
         result = await scraper.scrape_urls(["https://example.com"])
         assert isinstance(result, list)
@@ -389,29 +390,29 @@ class TestScraperEdgeCases:
     async def test_scrape_urls_max_concurrency_one(self):
         """Testa scrape_urls com concurrency de 1."""
         scraper = Scraper(max_concurrency=1)
-        
+
         with patch("fastapi_zero.services.scraper.httpx.AsyncClient"):
             result = await scraper.scrape_urls([
                 "https://example.com/1",
                 "https://example.com/2",
             ])
-            
+
             assert isinstance(result, list)
 
     @pytest.mark.asyncio
     async def test_discover_urls_max_urls_limit(self):
         """Testa discover_urls respeitando max_urls."""
         scraper = Scraper()
-        
+
         with patch.object(scraper, '_discover_urls_impl', new_callable=AsyncMock) as mock:
             # Retorna 100 URLs mas deve ser limitado
             mock.return_value = [f"https://example.com/{i}" for i in range(100)]
-            
+
             result = await scraper.discover_urls(
                 "https://example.com",
                 max_urls=10
             )
-            
+
             # O discover_urls chama _discover_urls_impl e depois limita
             # Mas em nosso mock, o limite é aplicado no método original
             # Vamos apenas verificar que retorna lista

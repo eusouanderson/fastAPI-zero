@@ -7,6 +7,10 @@ import re
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 
+MIN_TITLE_LENGTH = 3
+MAX_TITLE_LENGTH = 200
+MIN_RELEVANCE_SCORE = 10.0
+
 
 @dataclass
 class SearchResult:
@@ -36,7 +40,7 @@ class SearchOptimizer:
     def calculate_relevance(self, title: str) -> float:
         """
         Calcula score de relevância (0-100) baseado no título.
-        
+
         Critérios:
         - Palavras-chave presentes (peso alto)
         - Ordem das palavras (peso médio)
@@ -73,10 +77,11 @@ class SearchOptimizer:
 
         return min(100.0, final_score)
 
-    def is_likely_product(self, title: str, price: float | None) -> bool:
+    @staticmethod
+    def is_likely_product(title: str, price: float | None) -> bool:
         """
         Verifica se é provável que seja um produto válido.
-        
+
         Critérios:
         - Tem preço
         - Não é muito curto (mínimo 3 caracteres)
@@ -85,7 +90,11 @@ class SearchOptimizer:
         if price is None:
             return False
 
-        if not title or len(title) < 3 or len(title) > 200:
+        if (
+            not title
+            or len(title) < MIN_TITLE_LENGTH
+            or len(title) > MAX_TITLE_LENGTH
+        ):
             return False
 
         # Evita títulos que parecem ser cabeçalhos/navegação
@@ -107,7 +116,7 @@ class SearchOptimizer:
     ) -> list[SearchResult]:
         """
         Filtra e ordena resultados por relevância.
-        
+
         Input: lista de (url, title, price, currency)
         Output: lista de SearchResult ordenada por relevância
         """
@@ -122,7 +131,7 @@ class SearchOptimizer:
             score = self.calculate_relevance(title or "")
 
             # Filtra por score mínimo (ajustável)
-            if score < 10.0:
+            if score < MIN_RELEVANCE_SCORE:
                 continue
 
             filtered.append(SearchResult(
@@ -138,14 +147,14 @@ class SearchOptimizer:
 
         return filtered
 
+    @staticmethod
     def deduplicate(
-        self,
         results: list[SearchResult],
         similarity_threshold: float = 0.85
     ) -> list[SearchResult]:
         """
         Remove resultados duplicados/muito similares.
-        
+
         Usa SequenceMatcher para comparar títulos.
         """
         if not results:
@@ -183,13 +192,13 @@ def optimize_search_results(
 ) -> list[SearchResult]:
     """
     Otimiza resultados de busca aplicando todos os filtros.
-    
+
     Args:
         query: termo de busca
         results: lista de (url, title, price, currency)
         max_results: número máximo de resultados
         remove_duplicates: se deve remover duplicados
-        
+
     Returns:
         Lista de SearchResult ordenada por relevância
     """

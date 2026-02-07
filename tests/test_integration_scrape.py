@@ -1,13 +1,13 @@
-import pytest
-from unittest.mock import patch, AsyncMock, MagicMock
+# ruff: noqa: PLR6301, PLR2004, E501
+from unittest.mock import MagicMock, patch
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from fastapi_zero.app import app
+from fastapi_zero.db.models import PriceRecord, Product
 from fastapi_zero.db.session import get_session
-from fastapi_zero.db.models import Product, PriceRecord
 from fastapi_zero.services.scraper import ScrapedItem
-
 
 client = TestClient(app)
 
@@ -54,18 +54,18 @@ class TestScrapeEndpointsWithDatabase:
             }
 
             response = client.post("/scrape/urls", json=payload)
-            
+
             # Verifica se a resposta é bem-sucedida
             assert response.status_code == 200
             data = response.json()
-            
+
             # Verifica estrutura de resposta
             assert "total_scraped" in data or "products" in data
-            
+
             # Verifica se produtos foram salvos no banco
             products = session.query(Product).all()
             assert len(products) >= 0  # Pode ser 0 se mock não funcionar completamente
-            
+
             # Verifica se price records foram criados
             records = session.query(PriceRecord).all()
             assert len(records) >= 0
@@ -171,7 +171,7 @@ class TestScrapeEndpointsWithDatabase:
 
             response = client.post("/scrape/urls", json=payload)
             assert response.status_code == 200
-            
+
             # Apenas o produto válido deve ser salvo
             products = session.query(Product).all()
             assert len(products) >= 0  # Depende do mock
@@ -210,7 +210,7 @@ class TestCrawlEndpointsWithDatabase:
             }
 
             response = client.post("/crawl/urls", json=payload)
-            
+
             assert response.status_code == 200
             data = response.json()
             assert "urls" in data or "total_urls" in data
@@ -279,7 +279,7 @@ class TestSearchCrawlEndpointWithDatabase:
             }
 
             response = client.post("/crawl/search", json=payload)
-            
+
             assert response.status_code == 200
             data = response.json()
             assert "urls" in data or "total_urls" in data

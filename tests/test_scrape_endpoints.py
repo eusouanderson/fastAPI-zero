@@ -1,14 +1,9 @@
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-from fastapi.testclient import TestClient
-from fastapi_zero.app import app
-from fastapi_zero.schemas import (
-    ScrapeUrlsRequest,
-    ScrapeResult,
-    CrawlRequest,
-    CrawlResponse,
-)
+# ruff: noqa: PLR6301, PLR2004, E501, PLC0415
+from unittest.mock import MagicMock, patch
 
+from fastapi.testclient import TestClient
+
+from fastapi_zero.app import app
 
 client = TestClient(app)
 

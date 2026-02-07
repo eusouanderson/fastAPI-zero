@@ -1,9 +1,8 @@
-import pytest
-from unittest.mock import patch, MagicMock
+# ruff: noqa: PLR6301, PLR2004, E501, PLC0415, PLR1714, PLR6201
 from fastapi.testclient import TestClient
+
 from fastapi_zero.app import app
 from fastapi_zero.db.session import get_session
-
 
 client = TestClient(app)
 
@@ -69,7 +68,7 @@ class TestSessionDependency:
 
     def test_session_local_created(self):
         """Testa se SessionLocal foi criado."""
-        from fastapi_zero.db.session import engine, get_session
+        from fastapi_zero.db.session import engine
 
         assert engine is not None
         # Podemos usar get_session (é um generator)
@@ -89,10 +88,10 @@ class TestApplicationRoutes:
     def test_all_routes_registered(self):
         """Testa se todas as rotas estão registradas."""
         routes = [route.path for route in app.routes if hasattr(route, "path")]
-        
+
         # Rotas esperadas
         expected_routes = ["/", "/users", "/ui"]
-        
+
         for route in expected_routes:
             assert any(route in r for r in routes), f"Rota {route} não encontrada"
 

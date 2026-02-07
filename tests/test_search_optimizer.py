@@ -1,4 +1,4 @@
-import pytest
+# ruff: noqa: PLR6301, PLR2004, E501
 from fastapi_zero.services.search_optimizer import (
     SearchOptimizer,
     SearchResult,
@@ -42,6 +42,15 @@ class TestSearchOptimizer:
         optimizer = SearchOptimizer("gabinete gamer")
         score = optimizer.calculate_relevance("Monitor LG 24 polegadas")
         assert score < 30.0  # Score baixo
+
+    def test_relevance_empty_title_returns_zero(self):
+        optimizer = SearchOptimizer("gabinete")
+        assert optimizer.calculate_relevance("") == 0.0
+
+    def test_relevance_when_only_stopwords(self):
+        optimizer = SearchOptimizer("de a o")
+        score = optimizer.calculate_relevance("qualquer titulo")
+        assert score >= 0.0
 
     def test_is_likely_product_valid(self):
         """Testa validação de produto válido."""

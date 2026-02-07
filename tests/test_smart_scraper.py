@@ -1,7 +1,10 @@
-import pytest
+# ruff: noqa: I001, PLR6301, PLR2004, E501
 from unittest.mock import AsyncMock, patch
-from fastapi_zero.services.smart_scraper import SmartScraper
+
+import pytest
+
 from fastapi_zero.services.scraper import ScrapedItem
+from fastapi_zero.services.smart_scraper import SmartScraper
 
 
 class TestSmartScraper:

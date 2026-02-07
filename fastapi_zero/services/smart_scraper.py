@@ -3,7 +3,7 @@ Extensão do Scraper com busca otimizada.
 Integra SearchOptimizer para resultados mais precisos.
 """
 
-from fastapi_zero.services.scraper import Scraper, ScrapedItem
+from fastapi_zero.services.scraper import ScrapedItem, Scraper
 from fastapi_zero.services.search_optimizer import optimize_search_results
 
 
@@ -67,7 +67,7 @@ class SmartScraper(Scraper):
 
         return scraped_items
 
-    async def discover_search_urls_optimized(
+    async def discover_search_urls_optimized(  # noqa: PLR0913, PLR0917
         self,
         search_url: str,
         query: str,

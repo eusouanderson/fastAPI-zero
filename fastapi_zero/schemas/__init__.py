@@ -1,5 +1,7 @@
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl
 
+from .cart import AddToCartRequest, CartItemPublic, CartResponse
+
 
 class Message(BaseModel):
     message: str
@@ -80,3 +82,22 @@ class SearchCrawlRequest(BaseModel):
 class SearchCrawlResponse(BaseModel):
     total_urls: int
     urls: list[HttpUrl]
+
+
+__all__ = [
+    'Message',
+    'UserSchema',
+    'UserPublic',
+    'UserList',
+    'ScrapeUrlsRequest',
+    'ScrapedItemPublic',
+    'ProductBestPrice',
+    'ScrapeResult',
+    'CrawlRequest',
+    'CrawlResponse',
+    'SearchCrawlRequest',
+    'SearchCrawlResponse',
+    'AddToCartRequest',
+    'CartItemPublic',
+    'CartResponse',
+]

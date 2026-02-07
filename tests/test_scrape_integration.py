@@ -1,5 +1,6 @@
 """Integration tests for scraping endpoints."""
-import pytest
+
+# ruff: noqa: PLR2004
 
 
 def test_crawl_search_with_query(client):

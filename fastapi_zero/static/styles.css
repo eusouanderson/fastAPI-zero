@@ -262,3 +262,147 @@ select {
     opacity: 1;
   }
 }
+
+/* Cart styles */
+.cart-toggle {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  background: linear-gradient(135deg, #38bdf8, #6366f1);
+  color: #0f172a;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.6);
+  z-index: 2000;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.cart-badge {
+  background: #0f172a;
+  color: #f8fafc;
+  min-width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 12px;
+  padding: 0 6px;
+}
+
+.cart-panel {
+  position: fixed;
+  right: 24px;
+  top: 80px;
+  width: 360px;
+  max-width: calc(100% - 48px);
+  background: #071022;
+  border: 1px solid #122033;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 30px 80px rgba(2, 6, 23, 0.7);
+  z-index: 1500;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 70vh;
+}
+
+.cart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.cart-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+  padding-right: 6px;
+}
+
+.cart-item {
+  display: grid;
+  grid-template-columns: 1fr 60px 60px 32px;
+  gap: 8px;
+  align-items: center;
+  background: #081426;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.cart-item .name {
+  font-size: 13px;
+  color: #e6eef8;
+}
+
+.cart-item .qty {
+  font-size: 13px;
+  color: #cbd5e8;
+  text-align: center;
+}
+
+.cart-item .price {
+  font-size: 13px;
+  color: #aee6c2;
+  text-align: right;
+}
+
+.cart-item .remove {
+  background: transparent;
+  border: none;
+  color: #f87171;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.cart-link {
+  color: #93c5fd;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.cart-link:hover {
+  text-decoration: underline;
+}
+
+.cart-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid #122033;
+  padding-top: 8px;
+}
+
+.cart-total {
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.btn.small {
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+@media (max-width: 720px) {
+  .cart-panel {
+    right: 12px;
+    left: 12px;
+    top: auto;
+    bottom: 80px;
+    width: auto;
+    max-height: 60vh;
+  }
+  .cart-item {
+    grid-template-columns: 1fr 48px 48px 28px;
+  }
+}

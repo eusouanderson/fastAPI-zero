@@ -3,6 +3,7 @@
 
 # project stuff
 database.db
+dev.db
 
 
 ### Python ###

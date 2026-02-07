@@ -47,3 +47,23 @@ class PriceRecord:
     scraped_at: Mapped[datetime] = mapped_column(
         init=False, server_default=func.now()
     )
+
+
+@table_registry.mapped_as_dataclass
+class Cart:
+    __tablename__ = 'carts'
+
+    id: Mapped[int] = mapped_column(init=False, primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(
+        init=False, server_default=func.now()
+    )
+
+
+@table_registry.mapped_as_dataclass
+class CartItem:
+    __tablename__ = 'cart_items'
+
+    id: Mapped[int] = mapped_column(init=False, primary_key=True)
+    cart_id: Mapped[int] = mapped_column(ForeignKey('carts.id'))
+    product_id: Mapped[int] = mapped_column(ForeignKey('products.id'))
+    quantity: Mapped[int] = mapped_column(default=1)

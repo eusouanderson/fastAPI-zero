@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from fastapi_zero.api.routes.cart import router as cart_router
 from fastapi_zero.api.routes.scrape import router as scrape_router
 from fastapi_zero.api.routes.users import router as users_router
 from fastapi_zero.schemas import Message
@@ -18,6 +19,7 @@ templates = Jinja2Templates(directory='fastapi_zero/templates')
 
 app.include_router(users_router)
 app.include_router(scrape_router)
+app.include_router(cart_router)
 
 
 @app.get('/', status_code=HTTPStatus.OK, response_model=Message)
