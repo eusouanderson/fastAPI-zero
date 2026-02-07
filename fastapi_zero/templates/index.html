@@ -5,6 +5,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Fast Scraper</title>
+  <link rel="icon" href="/favicon.ico" />
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 
@@ -151,6 +152,17 @@ https://www.loja.gsiinformatica.com.br/pecas</textarea>
 
     <section class="card">
       <h2>Itens capturados</h2>
+      <div class="filters">
+        <label class="field">
+          <span>Ordenar</span>
+          <select id="raw-sort">
+            <option value="price-asc" selected>Menor preço</option>
+            <option value="price-desc">Maior preço</option>
+            <option value="name-asc">Nome (A-Z)</option>
+            <option value="name-desc">Nome (Z-A)</option>
+          </select>
+        </label>
+      </div>
       <div id="raw" class="table"></div>
     </section>
   </main>

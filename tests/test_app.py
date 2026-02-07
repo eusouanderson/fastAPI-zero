@@ -9,6 +9,12 @@ def test_root_deve_retornar_ola_mundo(client):
     assert response.status_code == HTTPStatus.OK
 
 
+def test_favicon(client):
+    response = client.get('/favicon.ico')
+    assert response.status_code == HTTPStatus.OK
+    assert 'image/svg+xml' in response.headers.get('content-type', '')
+
+
 def test_create_user(client):
     response = client.post(
         '/users/',

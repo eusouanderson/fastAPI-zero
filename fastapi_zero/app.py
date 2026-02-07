@@ -2,6 +2,7 @@ from http import HTTPStatus
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -20,6 +21,11 @@ templates = Jinja2Templates(directory='fastapi_zero/templates')
 app.include_router(users_router)
 app.include_router(scrape_router)
 app.include_router(cart_router)
+
+
+@app.get('/favicon.ico', include_in_schema=False)
+def favicon():
+    return FileResponse('fastapi_zero/static/favicon.svg', media_type='image/svg+xml')
 
 
 @app.get('/', status_code=HTTPStatus.OK, response_model=Message)

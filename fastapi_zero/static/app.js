@@ -5,12 +5,14 @@ const searchStatusEl = document.getElementById("search-status");
 const resultsEl = document.getElementById("results");
 const rawEl = document.getElementById("raw");
 const sortEl = document.getElementById("result-sort");
+const rawSortEl = document.getElementById("raw-sort");
 const priceMinEl = document.getElementById("price-min");
 const priceMaxEl = document.getElementById("price-max");
 const loadingOverlay = document.getElementById("loading-overlay");
 const loadingText = document.getElementById("loading-text");
 
 let lastResults = [];
+let lastRawItems = [];
 
 const showLoading = (message = "Buscando produtos...") => {
   loadingText.textContent = message;
@@ -202,6 +204,30 @@ const applyResultFilters = () => {
   );
 };
 
+const findProductForRaw = (item) => {
+  if (!lastResults.length) return null;
+  const byUrl = lastResults.find((p) => p.source_url === item.url);
+  if (byUrl?.product_id) return byUrl;
+
+  const rawTitle = normalizeText(item.title || "");
+  if (!rawTitle) return null;
+
+  const candidates = lastResults.filter((p) => {
+    const name = normalizeText(p.name || "");
+    return name && (name.includes(rawTitle) || rawTitle.includes(name));
+  });
+
+  if (!candidates.length) return null;
+  if (item.price == null) return candidates[0];
+
+  const price = Number(item.price);
+  const withPrice = candidates.find((p) =>
+    Math.abs(Number(p.lowest_price || 0) - price) <= Math.max(1, price * 0.05)
+  );
+
+  return withPrice || candidates[0];
+};
+
 const buildRawRow = (item) => {
   const row = document.createElement("div");
   row.className = "row";
@@ -221,8 +247,61 @@ const buildRawRow = (item) => {
   link.rel = "noreferrer";
   link.textContent = "Abrir";
 
-  row.append(title, currency, price, link);
+  const actions = document.createElement("div");
+  actions.style.display = "flex";
+  actions.style.gap = "8px";
+
+  const addBtn = document.createElement("button");
+  addBtn.className = "btn small";
+  addBtn.textContent = "Adicionar";
+
+  const match = findProductForRaw(item);
+  if (match?.product_id) {
+    addBtn.addEventListener("click", () => {
+      addToCart(match.product_id, 1);
+    });
+  } else {
+    addBtn.disabled = true;
+    addBtn.title = "Produto não salvo";
+  }
+
+  actions.append(link, addBtn);
+
+  row.append(title, currency, price, actions);
   return row;
+};
+
+const applyRawSort = () => {
+  if (!lastRawItems.length) {
+    renderTable(rawEl, ["Título", "Moeda", "Preço", "Ações"], []);
+    return;
+  }
+
+  const sortValue = rawSortEl?.value || "price-asc";
+  const sorted = lastRawItems.slice().sort((a, b) => {
+    if (sortValue === "price-desc") {
+      if (a.price == null && b.price == null) return 0;
+      if (a.price == null) return 1;
+      if (b.price == null) return -1;
+      return b.price - a.price;
+    }
+    if (sortValue === "name-asc") {
+      return (a.title || "").localeCompare(b.title || "");
+    }
+    if (sortValue === "name-desc") {
+      return (b.title || "").localeCompare(a.title || "");
+    }
+    if (a.price == null && b.price == null) return 0;
+    if (a.price == null) return 1;
+    if (b.price == null) return -1;
+    return a.price - b.price;
+  });
+
+  renderTable(
+    rawEl,
+    ["Título", "Moeda", "Preço", "Ações"],
+    sorted.map(buildRawRow)
+  );
 };
 
 /* --- Cart client (optimistic, minimal DOM updates) --- */
@@ -381,6 +460,7 @@ const runScrape = async (urls, searchQuery = null, options = {}) => {
   statusEl.textContent = "";
   resultsEl.innerHTML = "";
   rawEl.innerHTML = "";
+  lastRawItems = [];
 
   if (!urls.length) {
     statusEl.textContent = "Informe pelo menos uma URL.";
@@ -487,11 +567,8 @@ const runScrape = async (urls, searchQuery = null, options = {}) => {
     lastResults = products;
     applyResultFilters();
 
-    renderTable(
-      rawEl,
-      ["Título", "Moeda", "Preço", "Link"],
-      data.raw_items.map(buildRawRow)
-    );
+    lastRawItems = data.raw_items || [];
+    applyRawSort();
   } catch (error) {
     statusEl.textContent = error.message;
   } finally {
@@ -511,6 +588,9 @@ if (priceMinEl) {
 }
 if (priceMaxEl) {
   priceMaxEl.addEventListener("input", applyResultFilters);
+}
+if (rawSortEl) {
+  rawSortEl.addEventListener("change", applyRawSort);
 }
 
 form.addEventListener("submit", async (event) => {
