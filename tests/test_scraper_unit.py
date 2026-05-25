@@ -9,8 +9,11 @@ from fastapi_zero.services import scraper as s
 
 def test_parse_price_formats():
     assert s.parse_price("R$ 1.234,56") == (1234.56, "BRL")
+    assert s.parse_price("R$\u00a01.799,00") == (1799.00, "BRL")
     assert s.parse_price("$ 1,234.56") == (1234.56, "USD")
     assert s.parse_price("€ 99,90") == (99.90, "EUR")
+    assert s.parse_price("BRL 1.799,00") == (1799.00, "BRL")
+    assert s.parse_price("BRL 1799") == (1799.00, "BRL")
     # digits-only interpreted as cents when long enough
     assert s.parse_price("12345") == (123.45, None)
 
@@ -47,8 +50,8 @@ def test_extract_price_best_candidate():
     """
     parser = HTMLParser(html)
     raw, currency, price = s.extract_price(parser, html)
-    assert price == 99.0
-    assert currency == "USD"
+        assert price == 99.90
+        assert currency == "BRL"
     assert raw is not None
 
 

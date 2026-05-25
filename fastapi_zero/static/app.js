@@ -142,8 +142,21 @@ const buildResultRow = (item) => {
   const name = document.createElement("span");
   name.textContent = item.name;
 
-  const category = document.createElement("span");
-  category.textContent = item.category ?? "-";
+  const getCompanyName = (url) => {
+    if (!url) return "Abrir";
+    try {
+      const host = new URL(url).hostname.replace(/^www\./, "");
+      const base = host.split(".")[0] || host;
+      return base
+        .replace(/[-_]+/g, " ")
+        .split(" ")
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ");
+    } catch {
+      return "Abrir";
+    }
+  };
 
   const price = document.createElement("span");
   price.textContent = `${item.currency ?? ""} ${item.lowest_price.toFixed(2)}`;
@@ -152,7 +165,7 @@ const buildResultRow = (item) => {
   link.href = item.source_url;
   link.target = "_blank";
   link.rel = "noreferrer";
-  link.textContent = "Abrir";
+  link.textContent = getCompanyName(item.source_url);
   const actions = document.createElement('div');
   actions.style.display = 'flex';
   actions.style.gap = '8px';
@@ -164,13 +177,13 @@ const buildResultRow = (item) => {
   });
   actions.append(link, addBtn);
 
-  row.append(name, category, price, actions);
+  row.append(name, price, actions);
   return row;
 };
 
 const applyResultFilters = () => {
   if (!lastResults.length) {
-    renderTable(resultsEl, ["Produto", "Categoria", "Menor preço", "Link"], []);
+    renderTable(resultsEl, ["Produto", "Menor preço", "Empresa"], []);
     return;
   }
 
@@ -199,7 +212,7 @@ const applyResultFilters = () => {
 
   renderTable(
     resultsEl,
-    ["Produto", "Categoria", "Menor preço", "Link"],
+    ["Produto", "Menor preço", "Empresa"],
     filtered.map(buildResultRow)
   );
 };

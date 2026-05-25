@@ -276,18 +276,24 @@ def extract_price(
 
     candidates.extend(extract_price_from_raw_html(html))
 
-    best_price = None
-    best_raw = None
-    best_currency = None
+    parsed_candidates: list[tuple[float, str | None, str, int]] = []
 
     for value in candidates:
         parsed, currency = parse_price(value)
         if parsed is None:
             continue
-        if best_price is None or parsed < best_price:
-            best_price = parsed
-            best_raw = value
-            best_currency = currency
+        digits = len(str(int(abs(parsed))))
+        parsed_candidates.append((parsed, currency, value, digits))
+
+    if not parsed_candidates:
+        return None, None, None
+
+    max_digits = max(c[3] for c in parsed_candidates)
+    if max_digits >= 4:
+        filtered = [c for c in parsed_candidates if c[3] == max_digits]
+        best_price, best_currency, best_raw, _ = min(filtered, key=lambda c: c[0])
+    else:
+        best_price, best_currency, best_raw, _ = min(parsed_candidates, key=lambda c: c[0])
 
     return best_raw, best_currency, best_price
 
@@ -426,22 +432,29 @@ def _extract_from_next(
 
 
 def parse_price(raw: str) -> tuple[float | None, str | None]:
-    raw = raw.strip()
+    raw = raw.replace('\u00a0', ' ').strip()
     currency = None
 
-    if 'R$' in raw:
+    if 'R$' in raw or re.search(r'\bBRL\b', raw, flags=re.IGNORECASE):
         currency = 'BRL'
-    elif '€' in raw:
+    elif '€' in raw or re.search(r'\bEUR\b', raw, flags=re.IGNORECASE):
         currency = 'EUR'
-    elif '$' in raw:
+    elif '$' in raw or re.search(r'\bUSD\b', raw, flags=re.IGNORECASE):
         currency = 'USD'
 
     cleaned = (
         raw.replace('R$', '')
         .replace('€', '')
         .replace('$', '')
-        .replace(' ', '')
+        .replace('BRL', '')
+        .replace('brl', '')
+        .replace('USD', '')
+        .replace('usd', '')
+        .replace('EUR', '')
+        .replace('eur', '')
     )
+
+    cleaned = re.sub(r'\s+', '', cleaned)
 
     if ',' in cleaned and '.' in cleaned:
         if cleaned.rfind(',') > cleaned.rfind('.'):
@@ -453,7 +466,9 @@ def parse_price(raw: str) -> tuple[float | None, str | None]:
 
     if cleaned.isdigit() and len(cleaned) >= MIN_PRICE_LENGTH:
         try:
-            return float(cleaned) / 100, currency
+            if currency is None:
+                return float(cleaned) / 100, currency
+            return float(cleaned), currency
         except ValueError:
             return None, currency
 
